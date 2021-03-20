@@ -1,0 +1,9 @@
+{{ template "_head" .}}
+<turbo-frame id="entity">
+    <form action="/entity" method="post">
+        <label for="name">Name</label><br>
+        <input type="text" name="name" id="name"><br>
+        <input type="submit" value="Submit">
+    </form>
+</turbo-frame>
+{{ template "_footer" .}}
