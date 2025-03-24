@@ -27,7 +27,7 @@ func NewRouter() *mux.Router {
 
 func PrepareRoutesWithTemplates(router *mux.Router, t *template.Template) {
 	router.Handle("/", newIndex(t)).Methods(http.MethodGet)
-	router.Handle("/entity", newCreateEntity(t)).Methods(http.MethodPost)
+	router.Handle("/greet", newCreateEntity(t)).Methods(http.MethodPost)
 }
 
 func newIndex(templates *template.Template) http.HandlerFunc {
