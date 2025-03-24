@@ -9,12 +9,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Entity struct {
+type Person struct {
 	Name string `form:"name"`
 }
 
 func GenerateTemplates() *template.Template {
 	t := template.Must(template.ParseGlob("templates/layout/*.gohtml"))
+	t = template.Must(t.ParseGlob("templates/partials/*.gohtml"))
 	t = template.Must(t.ParseGlob("templates/*.gohtml"))
 
 	return t
@@ -51,7 +52,11 @@ func newCreateEntity(templates *template.Template) http.HandlerFunc {
 		name := r.FormValue("name")
 
 		writeHeaders(w, http.StatusOK)
-		_ = templates.ExecuteTemplate(w, "created.gohtml", Entity{name})
+		err := templates.ExecuteTemplate(w, "greetings_partial", Person{name})
+
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
