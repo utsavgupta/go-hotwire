@@ -12,38 +12,13 @@ import (
 )
 
 type Message struct {
-	Sender string
-	Text   string
-}
-
-type Messages struct {
-	Messages []Message
-}
-
-func NewMessages() Messages {
-	return Messages{
-		make([]Message, 0, 10),
-	}
-}
-
-func (m *Messages) AddMessage(sender, text string) {
-	m.Messages = append(m.Messages, Message{sender, text})
-}
-
-func (m *Messages) GetMessages() []Message {
-	return m.Messages
-}
-
-func (m *Messages) AddUserMessage(msg string) {
-	m.AddMessage("User", msg)
-}
-
-func (m *Messages) AddBotMessage(msg string) {
-	m.AddMessage("Bot", msg)
+	User string
+	Bot  string
 }
 
 func GenerateTemplates() *template.Template {
 	t := template.Must(template.ParseGlob("templates/layout/*.gohtml"))
+	t = template.Must(t.ParseGlob("templates/partials/*.gohtml"))
 	t = template.Must(t.ParseGlob("templates/*.gohtml"))
 
 	return t
@@ -75,8 +50,6 @@ func newIndex(templates *template.Template) http.HandlerFunc {
 
 func newChat(templates *template.Template, gemini *services.GeminiService) http.HandlerFunc {
 
-	msgs := NewMessages()
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			fmt.Fprintf(os.Stderr, "could not parse form")
@@ -85,19 +58,16 @@ func newChat(templates *template.Template, gemini *services.GeminiService) http.
 		}
 
 		msg := r.FormValue("message")
-
-		msgs.AddUserMessage(msg)
+		bot := "Cannot talk to Gemini at the moment. 🥲"
 
 		geminiResp, err := gemini.GenerateResponse(msg)
 
 		if err == nil {
-			msgs.AddBotMessage(geminiResp.Text)
-		} else {
-			msgs.AddBotMessage("Cannot talk to Gemini at the moment. 🥲")
+			bot = geminiResp.Text
 		}
 
-		writeHeaders(w, http.StatusOK)
-		err = templates.ExecuteTemplate(w, "index.gohtml", msgs)
+		writeTurboStreamHeaders(w)
+		err = templates.ExecuteTemplate(w, "_message_segment", Message{User: msg, Bot: bot})
 
 		if err != nil {
 			fmt.Println(err)
@@ -108,6 +78,11 @@ func newChat(templates *template.Template, gemini *services.GeminiService) http.
 func writeHeaders(w http.ResponseWriter, status int) {
 	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(status)
+}
+
+func writeTurboStreamHeaders(w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "text/vnd.turbo-stream.html")
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {

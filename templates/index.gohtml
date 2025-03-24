@@ -1,9 +1,7 @@
 {{ template "_head" .}}
 <h1>Welcome to the Hotwire Demo</h1>
 
-{{ range .Messages }}
-<p><b>{{ .Sender }}</b>: {{ .Text }}</p>
-{{ end }}
+<div id="messages"></div>
 
 <form action="/chat" method="post">
     <label for="message">Message</label><br>

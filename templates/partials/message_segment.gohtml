@@ -1,0 +1,8 @@
+{{ define "_message_segment" }}
+<turbo-stream action="append" target="messages">
+    <template>
+        <p><b>User</b>: {{ .User }}</p> 
+        <p><b>Bot</b>: {{ .Bot }}</p>
+    </template>
+</turbo-stream>
+{{ end }}
