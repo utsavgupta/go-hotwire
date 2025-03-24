@@ -27,7 +27,7 @@ func NewRouter() *mux.Router {
 
 func PrepareRoutesWithTemplates(router *mux.Router, t *template.Template) {
 	router.Handle("/", newIndex(t)).Methods(http.MethodGet)
-	router.Handle("/greet", newCreateEntity(t)).Methods(http.MethodPost)
+	router.Handle("/greet", newGreetings(t)).Methods(http.MethodPost)
 }
 
 func newIndex(templates *template.Template) http.HandlerFunc {
@@ -41,7 +41,7 @@ func newIndex(templates *template.Template) http.HandlerFunc {
 	}
 }
 
-func newCreateEntity(templates *template.Template) http.HandlerFunc {
+func newGreetings(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			fmt.Fprintf(os.Stderr, "could not parse form")
