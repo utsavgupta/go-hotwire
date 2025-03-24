@@ -15,7 +15,6 @@ type Person struct {
 
 func GenerateTemplates() *template.Template {
 	t := template.Must(template.ParseGlob("templates/layout/*.gohtml"))
-	t = template.Must(t.ParseGlob("templates/partials/*.gohtml"))
 	t = template.Must(t.ParseGlob("templates/*.gohtml"))
 
 	return t
@@ -27,7 +26,7 @@ func NewRouter() *mux.Router {
 
 func PrepareRoutesWithTemplates(router *mux.Router, t *template.Template) {
 	router.Handle("/", newIndex(t)).Methods(http.MethodGet)
-	router.Handle("/entity", newCreateEntity(t)).Methods(http.MethodPost)
+	router.Handle("/greet", newGreetings(t)).Methods(http.MethodPost)
 }
 
 func newIndex(templates *template.Template) http.HandlerFunc {
@@ -41,7 +40,7 @@ func newIndex(templates *template.Template) http.HandlerFunc {
 	}
 }
 
-func newCreateEntity(templates *template.Template) http.HandlerFunc {
+func newGreetings(templates *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			fmt.Fprintf(os.Stderr, "could not parse form")
@@ -52,7 +51,7 @@ func newCreateEntity(templates *template.Template) http.HandlerFunc {
 		name := r.FormValue("name")
 
 		writeHeaders(w, http.StatusOK)
-		err := templates.ExecuteTemplate(w, "greetings_partial", Person{name})
+		err := templates.ExecuteTemplate(w, "greetings.gohtml", Person{name})
 
 		if err != nil {
 			fmt.Println(err)
