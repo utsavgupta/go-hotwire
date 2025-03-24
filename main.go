@@ -5,12 +5,13 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
 type Person struct {
-	Name string `form:"name"`
+	Name string
 }
 
 func GenerateTemplates() *template.Template {
@@ -49,6 +50,8 @@ func newGreetings(templates *template.Template) http.HandlerFunc {
 		}
 
 		name := r.FormValue("name")
+
+		time.Sleep(100 * time.Millisecond)
 
 		writeHeaders(w, http.StatusOK)
 		err := templates.ExecuteTemplate(w, "greetings.gohtml", Person{name})
