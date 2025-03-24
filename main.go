@@ -7,10 +7,39 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/utsavgupta/go-hotwire/config"
+	"github.com/utsavgupta/go-hotwire/services"
 )
 
-type Person struct {
-	Name string `form:"name"`
+type Message struct {
+	Sender string
+	Text   string
+}
+
+type Messages struct {
+	Messages []Message
+}
+
+func NewMessages() Messages {
+	return Messages{
+		make([]Message, 0, 10),
+	}
+}
+
+func (m *Messages) AddMessage(sender, text string) {
+	m.Messages = append(m.Messages, Message{sender, text})
+}
+
+func (m *Messages) GetMessages() []Message {
+	return m.Messages
+}
+
+func (m *Messages) AddUserMessage(msg string) {
+	m.AddMessage("User", msg)
+}
+
+func (m *Messages) AddBotMessage(msg string) {
+	m.AddMessage("Bot", msg)
 }
 
 func GenerateTemplates() *template.Template {
@@ -25,8 +54,12 @@ func NewRouter() *mux.Router {
 }
 
 func PrepareRoutesWithTemplates(router *mux.Router, t *template.Template) {
+
+	cfg := config.LoadConfig()
+	gemini := services.NewGeminiService(cfg)
+
 	router.Handle("/", newIndex(t)).Methods(http.MethodGet)
-	router.Handle("/greet", newGreetings(t)).Methods(http.MethodPost)
+	router.Handle("/chat", newChat(t, gemini)).Methods(http.MethodPost)
 }
 
 func newIndex(templates *template.Template) http.HandlerFunc {
@@ -40,7 +73,10 @@ func newIndex(templates *template.Template) http.HandlerFunc {
 	}
 }
 
-func newGreetings(templates *template.Template) http.HandlerFunc {
+func newChat(templates *template.Template, gemini *services.GeminiService) http.HandlerFunc {
+
+	msgs := NewMessages()
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			fmt.Fprintf(os.Stderr, "could not parse form")
@@ -48,10 +84,20 @@ func newGreetings(templates *template.Template) http.HandlerFunc {
 			return
 		}
 
-		name := r.FormValue("name")
+		msg := r.FormValue("message")
+
+		msgs.AddUserMessage(msg)
+
+		geminiResp, err := gemini.GenerateResponse(msg)
+
+		if err == nil {
+			msgs.AddBotMessage(geminiResp.Text)
+		} else {
+			msgs.AddBotMessage("Cannot talk to Gemini at the moment. 🥲")
+		}
 
 		writeHeaders(w, http.StatusOK)
-		err := templates.ExecuteTemplate(w, "greetings.gohtml", Person{name})
+		err = templates.ExecuteTemplate(w, "index.gohtml", msgs)
 
 		if err != nil {
 			fmt.Println(err)
